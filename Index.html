@@ -1,0 +1,200 @@
+]<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Epic Lighthouse Animation</title>
+<style>
+  body { margin: 0; background: #000; }
+  canvas { display: block; margin: 0 auto; background: #001; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 400;
+
+let time = 0;
+let phase = "beginning"; 
+let phaseTime = 0;
+let beamAngle = 0;
+let boats = [
+  {x: 100, y: 300, dir: 0.2},
+  {x: 700, y: 310, dir: -0.15}
+];
+let birds = [
+  {x: 0, y: 100, speed:1},
+  {x: -50, y:120, speed:1.2},
+  {x: -100, y:90, speed:0.9}
+];
+
+function drawSky() {
+  if (phase === "beginning") {
+    const grd = ctx.createLinearGradient(0,0,0,canvas.height);
+    grd.addColorStop(0, "#FF8C00"); // 
+    grd.addColorStop(1, "#001");
+    ctx.fillStyle = grd;
+  } else if (phase === "middle") {
+    ctx.fillStyle = "#111"; //
+  } else if (phase === "end") {
+    const grd = ctx.createLinearGradient(0,0,0,canvas.height);
+    grd.addColorStop(0, "#87CEEB"); 
+    grd.addColorStop(1, "#001");
+    ctx.fillStyle = grd;
+  }
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function drawLightning() {
+  if (phase==="middle" && Math.random()<0.01) {
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.beginPath();
+    let x = 200+Math.random()*400;
+    ctx.moveTo(x,0);
+    ctx.lineTo(x+Math.random()*20-10,100);
+    ctx.lineTo(x+Math.random()*40-20,200);
+    ctx.stroke();
+  }
+}
+
+function drawSea() {
+  ctx.fillStyle = "#003";
+  ctx.beginPath();
+  ctx.moveTo(0, 320);
+  for (let x=0; x<=canvas.width; x+=10) {
+    let wave = Math.sin((x+time*2)/20);
+    let y = 320 + wave*(phase==="middle"? 20: 8);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.lineTo(0, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawBoats() {
+  boats.forEach(boat=>{
+    ctx.fillStyle="#654321";
+    ctx.fillRect(boat.x, boat.y, 20,5);
+    ctx.beginPath();
+    ctx.moveTo(boat.x+10,boat.y);
+    ctx.lineTo(boat.x+10,boat.y-10);
+    ctx.lineTo(boat.x+15,boat.y);
+    ctx.closePath();
+    ctx.fillStyle="#FFF";
+    ctx.fill();
+
+    boat.x += boat.dir;
+    if(boat.x>canvas.width) boat.x= -20;
+    if(boat.x<-20) boat.x= canvas.width+20;
+  });
+}
+
+function drawLighthouse() {
+  const centerX = 400;
+  const baseY = 320;
+  const height = 120;
+
+ 
+  ctx.fillStyle = "#DDD";
+  ctx.beginPath();
+  ctx.moveTo(centerX-20, baseY);
+  ctx.lineTo(centerX-10, baseY-height);
+  ctx.lineTo(centerX+10, baseY-height);
+  ctx.lineTo(centerX+20, baseY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle="#333";
+  for(let i=0;i<3;i++){
+    ctx.fillRect(centerX-3, baseY-30-i*30,6,10);
+  }
+
+  ctx.strokeStyle="#222";
+  ctx.beginPath();
+  ctx.arc(centerX, baseY-height, 14, 0, 2*Math.PI);
+  ctx.stroke();
+
+  
+  ctx.fillStyle = "#B00";
+  ctx.beginPath();
+  ctx.arc(centerX, baseY-height, 12, 0, Math.PI, true);
+  ctx.fill();
+
+ 
+  if (phase !== "end" || phaseTime<100) {
+    beamAngle += 0.02;
+    ctx.fillStyle = "rgba(255,255,180,0.2)";
+    ctx.beginPath();
+    ctx.moveTo(centerX, baseY-height);
+    const beamLength = 200;
+    let a1=beamAngle,a2=beamAngle+0.1;
+    ctx.lineTo(centerX+beamLength*Math.cos(a1), baseY-height+beamLength*Math.sin(a1));
+    ctx.lineTo(centerX+beamLength*Math.cos(a2), baseY-height+beamLength*Math.sin(a2));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+ 
+  ctx.fillStyle = "rgba(255,255,180,0.8)";
+  ctx.beginPath();
+  ctx.arc(centerX, baseY-height, 5, 0, 2*Math.PI);
+  ctx.fill();
+}
+
+function drawBirds() {
+  if(phase==="end"){
+    birds.forEach(bird=>{
+      ctx.fillStyle="#fff";
+      ctx.beginPath();
+      ctx.moveTo(bird.x,bird.y);
+      ctx.lineTo(bird.x+5,bird.y+2);
+      ctx.lineTo(bird.x+10,bird.y);
+      ctx.stroke();
+      bird.x += bird.speed;
+      if(bird.x>canvas.width) bird.x=-20;
+    });
+  }
+}
+
+function drawText() {
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "20px sans-serif";
+  ctx.textAlign = "center";
+  if (phase==="beginning" && phaseTime<100) {
+    ctx.fillText("As dusk falls, the lighthouse awakens...", canvas.width/2, 50);
+  } else if (phase==="middle" && phaseTime<100) {
+    ctx.fillText("Waves crash and lightning strikes, yet the light keeps turning...", canvas.width/2, 50);
+  } else if (phase==="end" && phaseTime<100) {
+    ctx.fillText("The dawn calms the sea, birds fly home...", canvas.width/2, 50);
+  }
+}
+
+function animate() {
+  time++;
+  phaseTime++;
+
+  if (phase==="beginning" && phaseTime>300) {
+    phase="middle"; phaseTime=0;
+  } else if (phase==="middle" && phaseTime>300) {
+    phase="end"; phaseTime=0;
+  }
+
+  drawSky();
+  drawLightning();
+  drawSea();
+  drawBoats();
+  drawLighthouse();
+  drawBirds();
+  drawText();
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
